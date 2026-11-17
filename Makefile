@@ -8,7 +8,8 @@ build:
 	@mkdir -p bin "$(GOTMPDIR)"
 	go build -o bin/mealie-generate ./cmd/mealie-generate
 	go build -o bin/mealie-shoppinglist ./cmd/mealie-shoppinglist
-	go build -o bin/mealie-pantry ./cmd/mealie-pantry
+	go build -o bin/mealie-freezer ./cmd/mealie-freezer
+	CGO_ENABLED=0 go build -o bin/mealie-pantry ./cmd/mealie-pantry
 
 test:
 	@mkdir -p "$(GOTMPDIR)"

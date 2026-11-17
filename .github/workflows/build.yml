@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p dist
           tar -C bin -czf dist/mealie-extras-linux-amd64.tar.gz \
-            mealie-generate mealie-shoppinglist mealie-pantry
+            mealie-generate mealie-shoppinglist mealie-freezer mealie-pantry
           sha256sum dist/mealie-extras-linux-amd64.tar.gz > dist/SHA256SUMS
 
       - name: Upload workflow artifact

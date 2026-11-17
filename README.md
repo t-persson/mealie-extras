@@ -10,6 +10,10 @@ Companion tools for a [Mealie](https://docs.mealie.io) instance.
 
 Build all three with `make build` (binaries in `bin/`).
 
+`mealie-generate` and `mealie-shoppinglist` accept `--ntfy-token`, or the
+`NTFY_TOKEN` environment variable, for ntfy authorization. If it is omitted,
+the Mealie API key is used for backward compatibility.
+
 ## mealie-pantry
 
 A standalone web app with its own SQLite database. It only **reads** from

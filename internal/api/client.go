@@ -80,19 +80,29 @@ func (r *Recipe) UnmarshalJSON(data []byte) error {
 
 type Client struct {
 	apiKey    string
+	ntfyToken string
 	mealieURL string
 	ntfyURL   string
 	http      *http.Client
 }
 
 func NewClient(apiKey string) *Client {
-	return NewClientWithURLs(apiKey, MealieURL, NtfyURL, nil)
+	return NewClientWithTokens(apiKey, apiKey)
+}
+
+func NewClientWithTokens(apiKey, ntfyToken string) *Client {
+	return NewClientWithURLsAndTokens(apiKey, ntfyToken, MealieURL, NtfyURL, nil)
 }
 
 // NewClientWithURLs accepts an injectable HTTP client. A nil client uses the
 // standard client with no timeout; callers can bound requests with their context.
 // Cross-origin redirects are rejected to prevent forwarding bearer credentials.
 func NewClientWithURLs(apiKey, mealieURL, ntfyURL string, httpClient *http.Client) *Client {
+	return NewClientWithURLsAndTokens(apiKey, apiKey, mealieURL, ntfyURL, httpClient)
+}
+
+// NewClientWithURLsAndTokens accepts separate Mealie and ntfy credentials.
+func NewClientWithURLsAndTokens(apiKey, ntfyToken, mealieURL, ntfyURL string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -111,8 +121,9 @@ func NewClientWithURLs(apiKey, mealieURL, ntfyURL string, httpClient *http.Clien
 		return nil
 	}
 	return &Client{
-		apiKey: apiKey, mealieURL: strings.TrimRight(mealieURL, "/"),
-		ntfyURL: strings.TrimRight(ntfyURL, "/"), http: &cloned,
+		apiKey: apiKey, ntfyToken: ntfyToken,
+		mealieURL: strings.TrimRight(mealieURL, "/"),
+		ntfyURL:   strings.TrimRight(ntfyURL, "/"), http: &cloned,
 	}
 }
 
@@ -221,7 +232,7 @@ func (c *Client) Notify(ctx context.Context, title, message, click string) error
 	}
 	req.Header.Set("Title", title)
 	req.Header.Set("Click", click)
-	resp, err := c.do(req)
+	resp, err := c.doWithToken(req, c.ntfyToken)
 	if err != nil {
 		return fmt.Errorf("notify: %w", err)
 	}
@@ -271,7 +282,15 @@ func (c *Client) json(ctx context.Context, method, path string, body, result any
 }
 
 func (c *Client) do(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "bearer "+c.apiKey)
+	return c.doWithToken(req, c.apiKey)
+}
+
+func (c *Client) doWithToken(req *http.Request, token string) (*http.Response, error) {
+	if token == "" {
+		req.Header.Del("Authorization")
+	} else {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err

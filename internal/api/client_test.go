@@ -18,10 +18,14 @@ import (
 const planJSON = `{"id":42,"recipeId":"recipe-id","date":"2026-11-09","recipe":{"name":"Soup","slug":"soup"}}`
 
 func testClient(t *testing.T, handler http.HandlerFunc) *Client {
+	return testClientWithTokens(t, "test-key", "test-key", handler)
+}
+
+func testClientWithTokens(t *testing.T, apiKey, ntfyToken string, handler http.HandlerFunc) *Client {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return NewClientWithURLs("test-key", server.URL+"/api/", server.URL+"/", server.Client())
+	return NewClientWithURLsAndTokens(apiKey, ntfyToken, server.URL+"/api/", server.URL+"/", server.Client())
 }
 
 func checkRequest(t *testing.T, r *http.Request, method, path string) {
@@ -29,7 +33,7 @@ func checkRequest(t *testing.T, r *http.Request, method, path string) {
 	if r.Method != method || r.URL.EscapedPath() != path {
 		t.Errorf("request = %s %s; want %s %s", r.Method, r.URL.EscapedPath(), method, path)
 	}
-	if got := r.Header.Get("Authorization"); got != "bearer test-key" {
+	if got := r.Header.Get("Authorization"); got != "Bearer test-key" {
 		t.Errorf("Authorization = %q", got)
 	}
 }
@@ -329,6 +333,9 @@ func TestNotify(t *testing.T) {
 		if r.Header.Get("Title") != "New meal plan" || r.Header.Get("Click") != "https://example.test/plan" {
 			t.Errorf("headers = %v", r.Header)
 		}
+		if got := r.Header.Get("Authorization"); got != "Bearer test-key" {
+			t.Errorf("Authorization = %q", got)
+		}
 		if got := r.Header.Get("Content-Type"); got != "" {
 			t.Errorf("unexpected Content-Type = %q", got)
 		}
@@ -339,6 +346,18 @@ func TestNotify(t *testing.T) {
 		fmt.Fprint(w, "not JSON")
 	})
 	if err := client.Notify(context.Background(), "New meal plan", "Message with åäö\nnot JSON", "https://example.test/plan"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNotifyUsesNtfyToken(t *testing.T) {
+	client := testClientWithTokens(t, "mealie-key", "ntfy-key", func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "Bearer ntfy-key" {
+			t.Errorf("Authorization = %q", got)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	})
+	if err := client.Notify(context.Background(), "", "message", ""); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -409,7 +428,7 @@ func TestDefaultsAndNoneKey(t *testing.T) {
 		t.Fatalf("unexpected defaults: %+v", client)
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get("Authorization"); got != "bearer None" {
+		if got := r.Header.Get("Authorization"); got != "Bearer None" {
 			t.Errorf("Authorization = %q", got)
 		}
 		fmt.Fprint(w, `{}`)

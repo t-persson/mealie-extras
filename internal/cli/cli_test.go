@@ -29,7 +29,8 @@ func TestNextMonday(t *testing.T) {
 			if got := options.StartDate.Format("2006-01-02"); got != test.want {
 				t.Fatalf("date = %s, want %s", got, test.want)
 			}
-			if options.Num != 7 || options.APIKey != "environment-key" || options.ListID != DefaultListID {
+			if options.Num != 7 || options.APIKey != "environment-key" || options.NtfyToken != "environment-key" ||
+				options.ListID != DefaultListID {
 				t.Fatalf("unexpected defaults: %+v", options)
 			}
 		})
@@ -40,14 +41,27 @@ func TestExplicitOptions(t *testing.T) {
 	t.Setenv("API_KEY", "environment-key")
 	options, err := Parse("mealie-shoppinglist", []string{
 		"--startdate", "2026-2-3", "--num", "00", "--apikey", "",
-		"--list", "another-list", "--cleantext", "--loglevel", "DEBUG",
+		"--ntfy-token", "ntfy-flag", "--list", "another-list", "--cleantext", "--loglevel", "DEBUG",
 	}, time.Now(), &bytes.Buffer{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if options.StartDate.Format("2006-01-02") != "2026-02-03" || options.Num != 0 || options.NumText != "00" ||
-		options.APIKey != "" || options.ListID != "another-list" || !options.CleanText || options.LogLevel != "DEBUG" {
+		options.APIKey != "" || options.NtfyToken != "ntfy-flag" || options.ListID != "another-list" ||
+		!options.CleanText || options.LogLevel != "DEBUG" {
 		t.Fatalf("unexpected options: %+v", options)
+	}
+}
+
+func TestNtfyTokenEnvironment(t *testing.T) {
+	t.Setenv("API_KEY", "mealie-key")
+	t.Setenv("NTFY_TOKEN", "ntfy-environment-key")
+	options, err := Parse("mealie-generate", nil, time.Now(), &bytes.Buffer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if options.NtfyToken != "ntfy-environment-key" {
+		t.Fatalf("ntfy token = %q", options.NtfyToken)
 	}
 }
 

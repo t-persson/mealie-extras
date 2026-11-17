@@ -20,6 +20,7 @@ type Options struct {
 	Num       int
 	NumText   string
 	APIKey    string
+	NtfyToken string
 	ListID    string
 	LogLevel  string
 	CleanText bool
@@ -35,6 +36,7 @@ func Parse(command string, args []string, now time.Time, output io.Writer) (Opti
 	flags.StringVar(&options.LogLevel, "loglevel", "INFO", "Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL")
 	flags.BoolVar(&options.CleanText, "cleantext", false, "Log messages without timestamps or levels")
 	flags.StringVar(&options.APIKey, "apikey", "None", "API key (defaults to API_KEY environment variable)")
+	flags.StringVar(&options.NtfyToken, "ntfy-token", "", "ntfy token (defaults to NTFY_TOKEN or API_KEY)")
 	if command == "mealie-shoppinglist" {
 		flags.StringVar(&options.ListID, "list", DefaultListID, "Shopping list ID")
 	}
@@ -67,11 +69,13 @@ func Parse(command string, args []string, now time.Time, output io.Writer) (Opti
 		return Options{}, fmt.Errorf("invalid --num %q: %w", options.NumText, err)
 	}
 	options.Num = num
-	explicitKey, explicitDate := false, false
+	explicitKey, explicitNtfyToken, explicitDate := false, false, false
 	flags.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "apikey":
 			explicitKey = true
+		case "ntfy-token":
+			explicitNtfyToken = true
 		case "startdate":
 			explicitDate = true
 		}
@@ -91,6 +95,13 @@ func Parse(command string, args []string, now time.Time, output io.Writer) (Opti
 	if !explicitKey {
 		if key, present := os.LookupEnv("API_KEY"); present {
 			options.APIKey = key
+		}
+	}
+	if !explicitNtfyToken {
+		if token, present := os.LookupEnv("NTFY_TOKEN"); present {
+			options.NtfyToken = token
+		} else {
+			options.NtfyToken = options.APIKey
 		}
 	}
 	return options, nil

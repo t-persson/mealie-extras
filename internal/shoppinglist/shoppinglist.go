@@ -37,7 +37,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	logger := cli.NewLogger(stdout, options.LogLevel, options.CleanText)
-	if err := Execute(ctx, options, api.NewClient(options.APIKey), logger); err != nil {
+	if err := Execute(ctx, options, api.NewClientWithTokens(options.APIKey, options.NtfyToken), logger); err != nil {
 		fmt.Fprintf(stderr, "mealie-shoppinglist: %v\n", err)
 		return 1
 	}

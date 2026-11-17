@@ -45,6 +45,7 @@ jobs:
           path: |
             bin/mealie-generate
             bin/mealie-shoppinglist
+            bin/mealie-freezer
             bin/mealie-pantry
             dist/*
           if-no-files-found: error

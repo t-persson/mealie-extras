@@ -1,0 +1,58 @@
+{{define "header"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} · Pantry</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <a href="/" {{if eq .Nav "overview"}}class="active"{{end}}>Stock</a>
+    <a href="/add" {{if eq .Nav "add"}}class="active"{{end}}>Add</a>
+    <a href="/inbox" {{if eq .Nav "inbox"}}class="active"{{end}}>Inbox{{if .Inbox}} <span class="badge">{{.Inbox}}</span>{{end}}</a>
+    <a href="/meals" {{if eq .Nav "meals"}}class="active"{{end}}>Meals</a>
+    <a href="/review" {{if eq .Nav "review"}}class="active"{{end}}>Review{{if .Review}} <span class="badge warn">{{.Review}}</span>{{end}}</a>
+    <a href="/history" {{if eq .Nav "history"}}class="active"{{end}}>History</a>
+  </nav>
+  <form method="post" action="/sync"><input type="hidden" name="back" value="/{{if ne .Nav "overview"}}{{.Nav}}{{end}}"><button>Sync</button></form>
+</header>
+<main>
+{{if .Message}}<p class="flash">{{.Message}}</p>{{end}}
+{{if .Error}}<p class="flash error">{{.Error}}</p>{{end}}
+<h1>{{.Title}}</h1>
+{{end}}
+
+{{define "footer"}}
+</main>
+</body>
+</html>
+{{end}}
+
+{{define "lot"}}
+<li class="lot{{if .Lot.ExpiresOn}}{{if lt .Lot.ExpiresOn .Today}} expired{{else if le .Lot.ExpiresOn .Soon}} soon{{end}}{{end}}">
+  <div class="lot-main">
+    <span class="name">{{.Lot.Name}}</span>
+    <span class="qty">{{qty .Lot.Quantity}} {{.Lot.UnitName}}</span>
+    {{if .Lot.ExpiresOn}}<span class="exp">exp {{.Lot.ExpiresOn}}</span>{{end}}
+    {{if not .Lot.FoodID}}<span class="tag" title="Not linked to a Mealie food; cooked meals will not subtract it">free text</span>{{end}}
+  </div>
+  <div class="lot-actions">
+    <form method="post" action="/lots/{{.Lot.ID}}/adjust"><input type="hidden" name="back" value="/#{{.Lot.Location}}"><input type="hidden" name="delta" value="-1"><button title="Remove 1">−1</button></form>
+    <form method="post" action="/lots/{{.Lot.ID}}/adjust"><input type="hidden" name="back" value="/#{{.Lot.Location}}"><input type="hidden" name="delta" value="1"><button title="Add 1">+1</button></form>
+    <details>
+      <summary>More</summary>
+      <form method="post" action="/lots/{{.Lot.ID}}/adjust"><input type="hidden" name="back" value="/#{{.Lot.Location}}">
+        <input name="remove" inputmode="decimal" placeholder="amount" size="5" required><button>Use</button></form>
+      <form method="post" action="/lots/{{.Lot.ID}}/move"><input type="hidden" name="back" value="/#{{.Lot.Location}}">
+        <input name="quantity" inputmode="decimal" placeholder="all" size="5">
+        <select name="to">{{range locations}}{{if ne . $.Lot.Location}}<option value="{{.}}">{{title .}}</option>{{end}}{{end}}</select>
+        <button>Move</button></form>
+      <form method="post" action="/lots/{{.Lot.ID}}/expiry"><input type="hidden" name="back" value="/#{{.Lot.Location}}">
+        <input type="date" name="expires" value="{{.Lot.ExpiresOn}}"><button>Set expiry</button></form>
+      <form method="post" action="/lots/{{.Lot.ID}}/remove"><input type="hidden" name="back" value="/#{{.Lot.Location}}"><button class="danger">Remove all</button></form>
+    </details>
+  </div>
+</li>
+{{end}}

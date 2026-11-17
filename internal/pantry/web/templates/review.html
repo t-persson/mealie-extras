@@ -1,0 +1,22 @@
+{{template "header" .}}
+<p class="muted">Ingredients from cooked meals that could not be subtracted automatically.</p>
+{{if .Data}}
+<form method="post" action="/review/all/resolve"><button>Dismiss all</button></form>
+<ul class="inbox">
+{{range .Data}}
+<li class="card">
+  <div><strong>{{.Name}}</strong>{{if .Quantity}} {{qty .Quantity}} {{.UnitName}}{{end}} <span class="muted">from {{.Recipe}}</span></div>
+  <div class="muted">{{.Reason}}</div>
+  {{range .Lots}}
+  <form method="post" action="/lots/{{.ID}}/adjust" class="row">
+    <input type="hidden" name="back" value="/review">
+    {{.Location}}: {{qty .Quantity}} {{.UnitName}}{{if .ExpiresOn}} (exp {{.ExpiresOn}}){{end}}
+    <input name="remove" inputmode="decimal" size="5" placeholder="amount" required><button>Use</button>
+  </form>
+  {{end}}
+  <form method="post" action="/review/{{.ID}}/resolve"><button class="link">Done</button></form>
+</li>
+{{end}}
+</ul>
+{{else}}<p>Nothing to review.</p>{{end}}
+{{template "footer" .}}

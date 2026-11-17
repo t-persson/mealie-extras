@@ -124,59 +124,7 @@ func (c *Client) MealPlans(ctx context.Context, startDate, endDate string) ([]Me
 	if endDate != "" {
 		query.Set("end_date", endDate)
 	}
-	plans := make([]MealPlan, 0)
-	seen := make(map[string]bool)
-	for {
-		encoded := query.Encode()
-		if seen[encoded] {
-			return nil, fmt.Errorf("list meal plans: repeated pagination query")
-		}
-		seen[encoded] = true
-		var page *struct {
-			Items json.RawMessage `json:"items"`
-			Next  *string         `json:"next"`
-		}
-		err := c.json(ctx, http.MethodGet, "/households/mealplans?"+encoded, nil, &page, false)
-		if err != nil {
-			return nil, fmt.Errorf("list meal plans: %w", err)
-		}
-		if page == nil {
-			return nil, fmt.Errorf("list meal plans: expected JSON object")
-		}
-		// Missing items means an empty page in the Python paging implementation.
-		if len(page.Items) != 0 {
-			var items []MealPlan
-			if err := json.Unmarshal(page.Items, &items); err != nil {
-				return nil, fmt.Errorf("list meal plans: decode items: %w", err)
-			}
-			if items == nil {
-				return nil, fmt.Errorf("list meal plans: items must be an array")
-			}
-			plans = append(plans, items...)
-		}
-		if page.Next == nil {
-			return plans, nil
-		}
-		next, err := url.Parse(*page.Next)
-		if err != nil {
-			return nil, fmt.Errorf("list meal plans: parse next URL: %w", err)
-		}
-		query, err = url.ParseQuery(next.RawQuery)
-		if err != nil {
-			return nil, fmt.Errorf("list meal plans: parse next query: %w", err)
-		}
-		// Intentionally use only the decoded query, never next's host or path.
-		// This fixes Python's nested params bug without leaking authorization.
-		filtered := make(url.Values)
-		for key, values := range query {
-			for _, value := range values {
-				if !strings.EqualFold(value, "none") {
-					filtered.Add(key, value)
-				}
-			}
-		}
-		query = filtered
-	}
+	return paginate[MealPlan](ctx, c, "list meal plans", "/households/mealplans", query)
 }
 
 func (c *Client) RandomMealPlan(ctx context.Context, date string) (MealPlan, error) {

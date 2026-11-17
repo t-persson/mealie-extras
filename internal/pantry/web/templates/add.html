@@ -1,0 +1,22 @@
+{{template "header" .}}
+{{with .Data}}
+<form method="post" action="/add" class="card stack">
+  <input type="hidden" name="back" value="/add?location={{.Location}}">
+  <label>Item <input name="name" list="foods" required autofocus autocomplete="off" placeholder="Mealie food or free text"></label>
+  <datalist id="foods">{{range .Foods}}<option value="{{.Name}}">{{end}}</datalist>
+  <div class="row">
+    <label>Quantity <input name="quantity" inputmode="decimal" value="1" size="6"></label>
+    <label>Unit <input name="unit" list="units" autocomplete="off" size="10"></label>
+    <datalist id="units">{{range .Units}}<option value="{{.Name}}">{{end}}</datalist>
+  </div>
+  <fieldset class="row">
+    <legend>Location</legend>
+    {{$loc := .Location}}
+    {{range locations}}<label class="radio"><input type="radio" name="location" value="{{.}}" {{if eq . $loc}}checked{{end}}> {{title .}}</label>{{end}}
+  </fieldset>
+  <label>Expires (optional) <input type="date" name="expires"></label>
+  <p class="muted">Names matching a Mealie food are linked to it, so cooking a planned meal subtracts them.</p>
+  <button>Add</button>
+</form>
+{{end}}
+{{template "footer" .}}

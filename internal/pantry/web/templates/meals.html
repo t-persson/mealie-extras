@@ -1,0 +1,20 @@
+{{template "header" .}}
+<p class="muted">Meals from the last and next week. Using “I Made This” in Mealie marks a planned meal cooked automatically.</p>
+{{with .Data}}
+{{range .Days}}
+<section class="card">
+  <h2>{{.Date}}</h2>
+  <ul class="plain">
+  {{range .Meals}}
+    <li class="meal">
+      <span>{{.Entry.EntryType}}: {{.Name}}</span>
+      {{if .Cooked}}<span class="tag ok">cooked ({{.Cooked.Source}})</span>
+      {{else if .Entry.Recipe}}<form method="post" action="/meals/{{.Entry.ID}}/cooked"><button {{if .Past}}class="primary"{{end}}>Mark cooked</button></form>{{end}}
+    </li>
+  {{end}}
+  </ul>
+</section>
+{{else}}<p>No meals planned.</p>
+{{end}}
+{{end}}
+{{template "footer" .}}

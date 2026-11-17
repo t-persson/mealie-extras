@@ -17,6 +17,12 @@ inclusive shopping ranges, duplicate-recipe deletion and retry, raw ingredient
 fields, household filtering, and notification contents. Zero days remains a
 supported input. Report intentional departures from Python behavior.
 
+`mealie-pantry` (web companion tracking fridge/freezer/pantry stock) has no
+Python counterpart. Its code lives in `internal/pantry/{app,store,sync,web}`. It
+must stay read-only towards Mealie; its own state is SQLite
+(`modernc.org/sqlite`, the one non-stdlib dependency). User-facing behavior is
+documented in `README.md`.
+
 ## Go implementation
 
 Use separate entry points under `cmd/mealie-generate` and

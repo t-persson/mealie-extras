@@ -1,0 +1,20 @@
+{{template "header" .}}
+<p class="muted">Items checked off on the Mealie shopping list. Choose where each one went.</p>
+{{if .Data}}
+<form method="post" action="/inbox/accept-all"><button>Store all in suggested places</button></form>
+<ul class="inbox">
+{{range .Data}}
+<li class="card">
+  <div><strong>{{.Item.Name}}</strong> <span class="muted">{{.Display}}</span></div>
+  <form method="post" action="/inbox/{{.ItemID}}/accept" class="row">
+    <input name="quantity" inputmode="decimal" value="{{qty .Item.Quantity}}" size="5" aria-label="Quantity"> {{.Item.UnitName}}
+    <input type="date" name="expires" aria-label="Expires">
+    {{$s := .Suggested}}
+    {{range locations}}<button name="location" value="{{.}}" {{if eq . $s}}class="primary"{{end}}>{{title .}}</button>{{end}}
+  </form>
+  <form method="post" action="/inbox/{{.ItemID}}/ignore"><button class="link">Ignore</button></form>
+</li>
+{{end}}
+</ul>
+{{else}}<p>Nothing waiting.</p>{{end}}
+{{template "footer" .}}

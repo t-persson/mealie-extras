@@ -8,6 +8,7 @@ build:
 	@mkdir -p bin "$(GOTMPDIR)"
 	go build -o bin/mealie-generate ./cmd/mealie-generate
 	go build -o bin/mealie-shoppinglist ./cmd/mealie-shoppinglist
+	go build -o bin/mealie-pantry ./cmd/mealie-pantry
 
 test:
 	@mkdir -p "$(GOTMPDIR)"

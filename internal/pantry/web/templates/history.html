@@ -1,0 +1,15 @@
+{{template "header" .}}
+<table class="history">
+<thead><tr><th>When</th><th>What</th><th></th></tr></thead>
+<tbody>
+{{range .Data}}
+<tr {{if .Undone}}class="undone"{{end}}>
+  <td>{{.At.Local.Format "2006-01-02 15:04"}}</td>
+  <td><span class="tag">{{.Reason}}</span> {{.Summary}}</td>
+  <td>{{if .Undone}}undone{{else}}<form method="post" action="/history/{{.ID}}/undo"><button class="link">Undo</button></form>{{end}}</td>
+</tr>
+{{else}}<tr><td colspan="3">No changes yet.</td></tr>
+{{end}}
+</tbody>
+</table>
+{{template "footer" .}}

@@ -1,0 +1,21 @@
+{{template "header" .}}
+{{with .Data}}
+{{if .Expiring}}
+<section class="card warn">
+  <h2>Expiring by {{.Soon}}</h2>
+  <ul class="plain">{{range .Expiring}}<li><a href="#{{.Location}}">{{.Name}}</a> — {{qty .Quantity}} {{.UnitName}} in {{.Location}}, expires {{.ExpiresOn}}</li>{{end}}</ul>
+</section>
+{{end}}
+<div class="sections">
+{{$d := .}}
+{{range .Sections}}
+<section class="card" id="{{.Location}}">
+  <h2>{{title .Location}} <a class="small" href="/add?location={{.Location}}">+ add</a></h2>
+  {{if .Lots}}
+  <ul class="lots">{{range .Lots}}{{template "lot" (lotView . $d)}}{{end}}</ul>
+  {{else}}<p class="muted">Empty.</p>{{end}}
+</section>
+{{end}}
+</div>
+{{end}}
+{{template "footer" .}}

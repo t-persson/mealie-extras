@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
@@ -17,13 +18,14 @@ const (
 	dateLayout = "2006-01-02"
 	ntfyTitle  = "Meal planned for tomorrow"
 	ntfyClick  = "https://mealie.tp-softworks.se/household/mealplan/planner/view"
+	mealieURL  = "https://mealie.tp-softworks.se"
 	command    = "mealie-freezer"
 )
 
 // Service is the set of backend operations used by the reminder.
 type Service interface {
 	MealPlans(ctx context.Context, startDate, endDate string) ([]api.MealPlan, error)
-	Notify(ctx context.Context, title, message, click string) error
+	NotifyWithAttachment(ctx context.Context, title, message, click, attach string) error
 }
 
 // Run parses args and executes the command, returning a process exit code.
@@ -74,7 +76,15 @@ func Execute(ctx context.Context, now time.Time, service Service, logger *cli.Lo
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("send notification: %w", err)
 	}
-	if err := service.Notify(ctx, ntfyTitle, message, ntfyClick); err != nil {
+	click, attach := ntfyClick, ""
+	if len(plans) == 1 && plans[0].Recipe.Slug != "" {
+		slug := url.PathEscape(plans[0].Recipe.Slug)
+		click = mealieURL + "/recipe/" + slug
+		if plans[0].RecipeID != "" {
+			attach = mealieURL + "/api/media/recipes/" + url.PathEscape(plans[0].RecipeID) + "/images/min-original.webp"
+		}
+	}
+	if err := service.NotifyWithAttachment(ctx, ntfyTitle, message, click, attach); err != nil {
 		return fmt.Errorf("send notification: %w", err)
 	}
 	return nil

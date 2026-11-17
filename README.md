@@ -9,6 +9,9 @@ Companion tools for a [Mealie](https://docs.mealie.io) instance.
 | `mealie-freezer` | Notify which meal is planned for tomorrow and remind you to retrieve its ingredients from the freezer. |
 | `mealie-pantry` | Web app tracking what is in the fridge, freezer and pantry. |
 
+When exactly one meal is planned, `mealie-freezer` links directly to that
+recipe and attaches Mealie's small recipe image to the ntfy notification.
+
 Build all commands with `make build` (binaries in `bin/`).
 
 `mealie-generate` and `mealie-shoppinglist` accept `--ntfy-token`, or the

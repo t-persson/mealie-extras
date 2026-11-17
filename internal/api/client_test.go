@@ -333,6 +333,9 @@ func TestNotify(t *testing.T) {
 		if r.Header.Get("Title") != "New meal plan" || r.Header.Get("Click") != "https://example.test/plan" {
 			t.Errorf("headers = %v", r.Header)
 		}
+		if got := r.Header.Get("Attach"); got != "" {
+			t.Errorf("unexpected Attach header = %q", got)
+		}
 		if got := r.Header.Get("Authorization"); got != "Bearer test-key" {
 			t.Errorf("Authorization = %q", got)
 		}
@@ -358,6 +361,19 @@ func TestNotifyUsesNtfyToken(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	})
 	if err := client.Notify(context.Background(), "", "message", ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNotifyWithAttachment(t *testing.T) {
+	client := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Attach"); got != "https://example.test/thumbnail.webp" {
+			t.Errorf("Attach = %q", got)
+		}
+		w.WriteHeader(http.StatusAccepted)
+	})
+	if err := client.NotifyWithAttachment(context.Background(), "title", "message",
+		"https://example.test/recipe", "https://example.test/thumbnail.webp"); err != nil {
 		t.Fatal(err)
 	}
 }

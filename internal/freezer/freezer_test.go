@@ -17,6 +17,7 @@ type fake struct {
 	title         string
 	message       string
 	click         string
+	attach        string
 	notifyErr     error
 	plansErr      error
 	notifications int
@@ -27,9 +28,9 @@ func (f *fake) MealPlans(_ context.Context, start, end string) ([]api.MealPlan, 
 	return f.plans, f.plansErr
 }
 
-func (f *fake) Notify(_ context.Context, title, message, click string) error {
+func (f *fake) NotifyWithAttachment(_ context.Context, title, message, click, attach string) error {
 	f.notifications++
-	f.title, f.message, f.click = title, message, click
+	f.title, f.message, f.click, f.attach = title, message, click, attach
 	return f.notifyErr
 }
 
@@ -41,7 +42,7 @@ func run(t *testing.T, now time.Time, f *fake) error {
 
 func TestReminderUsesTomorrowAndListsMeals(t *testing.T) {
 	f := &fake{plans: []api.MealPlan{
-		{Recipe: api.MealPlanRecipe{Name: "Soup"}},
+		{RecipeID: "recipe-id", Recipe: api.MealPlanRecipe{Name: "Soup", Slug: "soup"}},
 		{Recipe: api.MealPlanRecipe{Name: "Bread"}},
 	}}
 	if err := run(t, time.Date(2026, 11, 17, 16, 0, 0, 0, time.FixedZone("CET", 3600)), f); err != nil {
@@ -51,8 +52,21 @@ func TestReminderUsesTomorrowAndListsMeals(t *testing.T) {
 		t.Fatalf("date range = %q to %q", f.start, f.end)
 	}
 	if f.title != ntfyTitle || f.message != "Tomorrow's meal: Soup, Bread.\n\nRemember to retrieve the ingredients from the freezer." ||
-		f.click != ntfyClick {
+		f.click != ntfyClick || f.attach != "" {
 		t.Fatalf("notification = %q %q %q", f.title, f.message, f.click)
+	}
+}
+
+func TestReminderLinksAndAttachesSingleRecipe(t *testing.T) {
+	f := &fake{plans: []api.MealPlan{
+		{RecipeID: "recipe-id", Recipe: api.MealPlanRecipe{Name: "Soup", Slug: "soup"}},
+	}}
+	if err := run(t, time.Date(2026, 11, 17, 16, 0, 0, 0, time.FixedZone("CET", 3600)), f); err != nil {
+		t.Fatal(err)
+	}
+	if f.click != "https://mealie.tp-softworks.se/recipe/soup" ||
+		f.attach != "https://mealie.tp-softworks.se/api/media/recipes/recipe-id/images/min-original.webp" {
+		t.Fatalf("recipe notification links = %q %q", f.click, f.attach)
 	}
 }
 
@@ -61,7 +75,8 @@ func TestReminderNotifiesWhenNoMealIsPlanned(t *testing.T) {
 	if err := run(t, time.Date(2026, 11, 17, 0, 0, 0, 0, time.UTC), f); err != nil {
 		t.Fatal(err)
 	}
-	if f.message != "No meal is planned for tomorrow.\n\nRemember to retrieve the ingredients from the freezer." {
+	if f.message != "No meal is planned for tomorrow.\n\nRemember to retrieve the ingredients from the freezer." ||
+		f.click != ntfyClick || f.attach != "" {
 		t.Fatalf("message = %q", f.message)
 	}
 }

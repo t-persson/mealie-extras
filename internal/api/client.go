@@ -226,12 +226,21 @@ func keepIngredient(raw json.RawMessage) (bool, error) {
 // Notify publishes plain message data, not JSON, to the fixed "mealie" topic.
 // Like Python's ntfy client it checks status but does not decode the response.
 func (c *Client) Notify(ctx context.Context, title, message, click string) error {
+	return c.NotifyWithAttachment(ctx, title, message, click, "")
+}
+
+// NotifyWithAttachment publishes plain message data with an optional external
+// attachment URL, not JSON, to the fixed "mealie" topic.
+func (c *Client) NotifyWithAttachment(ctx context.Context, title, message, click, attach string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.ntfyURL+"/mealie", strings.NewReader(message))
 	if err != nil {
 		return fmt.Errorf("notify: create request: %w", err)
 	}
 	req.Header.Set("Title", title)
 	req.Header.Set("Click", click)
+	if attach != "" {
+		req.Header.Set("Attach", attach)
+	}
 	resp, err := c.doWithToken(req, c.ntfyToken)
 	if err != nil {
 		return fmt.Errorf("notify: %w", err)
